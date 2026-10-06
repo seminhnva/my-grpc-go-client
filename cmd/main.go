@@ -23,7 +23,8 @@ func main() {
 	defer conn.Close()
 
 	helloAdapter := hello.NewHelloAdapter(conn)
-	RunSayHello(helloAdapter, "Minbeo")
+	// RunSayHello(helloAdapter, "Minbeo")
+	RunSayManyHello(helloAdapter, "Minbeo")
 
 }
 
@@ -35,4 +36,8 @@ func RunSayHello(adapter *hello.HelloAdapter, name string) {
 		log.Fatalf("No hello %v", err)
 	}
 	log.Println(res.Greet)
+}
+
+func RunSayManyHello(adapter *hello.HelloAdapter, name string) {
+	adapter.SayManyHello(context.Background(), name)
 }
