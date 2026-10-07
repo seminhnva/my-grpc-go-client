@@ -66,3 +66,31 @@ func (a *HelloAdapter) SayHelloToEveryone(ctx context.Context, names []string) {
 	}
 	log.Println(res)
 }
+
+func (a *HelloAdapter) SayHelloContinuous(ctx context.Context, names []string) {
+	greetStream, err := a.helloClient.SayHelloContinuous(ctx)
+
+	if err != nil {
+		log.Fatalln("Err while stream SayHelloContinuous", err)
+	}
+	greetCh := make(chan any)
+	go func() {
+		for _, name := range names {
+			greetStream.Send(&hellopb.HelloRequest{
+				Name: name,
+			})
+		}
+	}()
+
+	go func() {
+		res, err := greetStream.Recv()
+		if err == io.EOF {
+			close(greetCh)
+		}
+		if err != nil {
+			log.Fatalln("Err while stream SayHelloContinuous", err)
+		}
+		log.Println(res.Greet)
+	}()
+	<-greetCh
+}

@@ -25,7 +25,8 @@ func main() {
 	helloAdapter := hello.NewHelloAdapter(conn)
 	// RunSayHello(helloAdapter, "Minbeo")
 	// RunSayManyHello(helloAdapter, "Minbeo")
-	SayHelloToEveryone(helloAdapter, []string{"superman", "thor", "batman"})
+	// SayHelloToEveryone(helloAdapter, []string{"superman", "thor", "batman"})
+	SayHelloContinuous(helloAdapter, []string{"superman", "thor", "batman"})
 
 }
 
@@ -44,5 +45,9 @@ func RunSayManyHello(adapter *hello.HelloAdapter, name string) {
 }
 
 func SayHelloToEveryone(adapter *hello.HelloAdapter, names []string) {
+	adapter.SayHelloToEveryone(context.Background(), names)
+}
+
+func SayHelloContinuous(adapter *hello.HelloAdapter, names []string) {
 	adapter.SayHelloToEveryone(context.Background(), names)
 }
