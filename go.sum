@@ -24,6 +24,8 @@ github.com/seminhnva/my-grpc-proto v0.0.11 h1:B5yeMbqkaN2afNsmOx8id+OFZQgrfdZt9T
 github.com/seminhnva/my-grpc-proto v0.0.11/go.mod h1:pxXg0RGeWgaBatP9+wIIHUqFV9qdmpEDwRbVIuWr8oU=
 github.com/seminhnva/my-grpc-proto v0.0.13 h1:r3hX1oIQXFhiiKsHnOTYlPPbM7krrQbt99FrAUfteAA=
 github.com/seminhnva/my-grpc-proto v0.0.13/go.mod h1:pxXg0RGeWgaBatP9+wIIHUqFV9qdmpEDwRbVIuWr8oU=
+github.com/seminhnva/my-grpc-proto v0.0.14 h1:T18gjyPhv2aUn2VZ12rWNtNti/1d63bXfbKifiomr/4=
+github.com/seminhnva/my-grpc-proto v0.0.14/go.mod h1:pxXg0RGeWgaBatP9+wIIHUqFV9qdmpEDwRbVIuWr8oU=
 golang.org/x/net v0.57.0 h1:K5+3DljvIuDG9/Jv9rvyMywYNFCQ9RSUY6OOTTkT+tE=
 golang.org/x/net v0.57.0/go.mod h1:KpXc8iv+r3XplLAG/f7Jsf9RPszJzdR0f58q9vGOuEU=
 golang.org/x/net v0.58.0 h1:ynWG7rqYi4ccpTEuPZ2QGWHktVEM9DMCj9yzDE0Q7To=

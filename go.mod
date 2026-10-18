@@ -3,7 +3,7 @@ module github.com/seminhnva/my-grpc-client
 go 1.26.0
 
 require (
-	github.com/seminhnva/my-grpc-proto v0.0.13
+	github.com/seminhnva/my-grpc-proto v0.0.14
 	google.golang.org/grpc v1.84.0
 )
 
