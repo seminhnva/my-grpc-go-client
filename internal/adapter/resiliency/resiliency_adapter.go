@@ -82,7 +82,7 @@ func (a *ResiliencyAdapter) ClientStreamResiliency(ctx context.Context, minDelay
 	maxDelaySecond int32, statusCodes []uint32, count int) {
 	resslStream, err := a.resiliencyClient.ClientStreamResiliency(ctx)
 	if err != nil {
-		log.Fatalln("Error on ClientStreamResiliency")
+		log.Fatalln("Error on ClientStreamResiliency", err)
 	}
 
 	for i := 1; i <= count; i++ {

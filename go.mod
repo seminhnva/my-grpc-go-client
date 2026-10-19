@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect

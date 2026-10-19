@@ -7,11 +7,13 @@ import (
 	"math/rand"
 	"time"
 
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/seminhnva/my-grpc-client/internal/adapter/bank"
 	resiliencty "github.com/seminhnva/my-grpc-client/internal/adapter/resiliency"
 	dbank "github.com/seminhnva/my-grpc-client/internal/application/domain/bank"
 	resl "github.com/seminhnva/my-grpc-client/internal/application/domain/resiliency"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -21,6 +23,20 @@ func main() {
 
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	opts = append(opts, grpc.WithUnaryInterceptor(
+		grpc_retry.UnaryClientInterceptor(
+			grpc_retry.WithCodes(codes.Unknown, codes.NotFound),
+			grpc_retry.WithMax(4),
+			grpc_retry.WithBackoff(grpc_retry.BackoffExponential(2*time.Second)),
+		),
+	))
+	opts = append(opts, grpc.WithStreamInterceptor(
+		grpc_retry.StreamClientInterceptor(
+			grpc_retry.WithCodes(codes.Unknown, codes.NotFound),
+			grpc_retry.WithMax(4),
+			grpc_retry.WithBackoff(grpc_retry.BackoffLinear(1*time.Second)),
+		),
+	))
 	conn, err := grpc.NewClient("localhost:9090", opts...)
 	if err != nil {
 		log.Fatalf("cant connect grpc Server :%v", err)
@@ -48,7 +64,11 @@ func main() {
 	// runUnaryResiliencyWithTimeout(resiliencyAdapter, 2, 8, []uint32{resl.OK}, 5*time.Second)
 	// runServerStreamResiliency(resiliencyAdapter, 0, 3, []uint32{resl.OK}, 15*time.Second)
 	// runClientStreamResiliency(resiliencyAdapter, 0, 3, []uint32{resl.OK}, 10, 5*time.Second)
-	runBiDirectionResiliency(resiliencyAdapter, 0, 3, []uint32{resl.OK}, 10, 10*time.Second)
+	// runBiDirectionResiliency(resiliencyAdapter, 0, 3, []uint32{resl.OK}, 10, 10*time.Second)
+
+	// runUnaryResiliency(resiliencyAdapter, 0, 3, []uint32{resl.UNKNOWN, resl.OK})
+	// runServerStreamResiliency(resiliencyAdapter, 0, 1, []uint32{resl.UNKNOWN, resl.NOT_FOUND, resl.OK}, 1*time.Second)
+	runClientStreamResiliency(resiliencyAdapter, 0, 1, []uint32{resl.UNKNOWN, resl.NOT_FOUND, resl.OK}, 2)
 }
 
 // func RunSayHello(adapter *hello.HelloAdapter, name string) {
@@ -96,7 +116,7 @@ func runSumarizeTransaction(adapter *bank.BankAdapter, acct string, numDummyTran
 		t := dbank.Transaction{
 			Amount:          float64(rand.Intn(500) + 10),
 			TransactionType: ttype,
-			Notes:           fmt.Sprint("Dummy transaction %v", i),
+			Notes:           fmt.Sprintf("Dummy transaction %v", i),
 		}
 		tx = append(tx, t)
 	}
@@ -117,11 +137,9 @@ func runTransferMultiple(adapter *bank.BankAdapter, fromAcct, toAcct string, num
 	adapter.TransferMultiple(context.Background(), trf)
 }
 
-func runUnaryResiliencyWithTimeout(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32, timeout time.Duration) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func runUnaryResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32) {
 
-	res, err := adapter.UnaryResiliency(ctx, minDelaySecond, maxDelaySecond, statusCodes)
+	res, err := adapter.UnaryResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes)
 
 	if err != nil {
 		log.Fatalln("Failted to call UnaryResponse")
@@ -129,22 +147,17 @@ func runUnaryResiliencyWithTimeout(adapter *resiliencty.ResiliencyAdapter, minDe
 
 	log.Println(res.DummyString)
 }
-func runServerStreamResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32, timeout time.Duration) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	adapter.ServerStreamResiliency(ctx, minDelaySecond, maxDelaySecond, statusCodes)
+func runServerStreamResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32) {
+
+	adapter.ServerStreamResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes)
 
 }
-func runClientStreamResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32, count int, timeout time.Duration) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func runClientStreamResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32, count int) {
 
-	adapter.ClientStreamResiliency(ctx, minDelaySecond, maxDelaySecond, statusCodes, count)
+	adapter.ClientStreamResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes, count)
 
 }
-func runBiDirectionResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32, count int, timeout time.Duration) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func runBiDirectionResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32, count int) {
 
-	adapter.BiDirectionResiliency(ctx, minDelaySecond, maxDelaySecond, statusCodes, count)
+	adapter.BiDirectionResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes, count)
 }
