@@ -12,11 +12,33 @@ import (
 	resiliencty "github.com/seminhnva/my-grpc-client/internal/adapter/resiliency"
 	dbank "github.com/seminhnva/my-grpc-client/internal/application/domain/bank"
 	resl "github.com/seminhnva/my-grpc-client/internal/application/domain/resiliency"
+	"github.com/seminhnva/my-grpc-proto/protogen/go/resiliency"
+	"github.com/sony/gobreaker"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+var cbreaker *gobreaker.CircuitBreaker
+
+func init() {
+	mybreaker := gobreaker.Settings{
+		Name: "my-circuit-breaker",
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+
+			log.Printf("Circuit breaker failure is %v, request is %v, means failutre ratio %v", counts.TotalFailures, counts.Requests, failureRatio)
+			return counts.Requests >= 3 && failureRatio >= 0.6
+		},
+		Timeout:     4,
+		MaxRequests: 3,
+		OnStateChange: func(name string, from, to gobreaker.State) {
+			log.Printf("Circuit breaker %v changed state, form %v to %v \n\n", name, from, to)
+		},
+	}
+	cbreaker = gobreaker.NewCircuitBreaker(mybreaker)
+
+}
 func main() {
 	log.SetFlags(0)
 	log.SetOutput(log.Writer())
@@ -68,7 +90,18 @@ func main() {
 
 	// runUnaryResiliency(resiliencyAdapter, 0, 3, []uint32{resl.UNKNOWN, resl.OK})
 	// runServerStreamResiliency(resiliencyAdapter, 0, 1, []uint32{resl.UNKNOWN, resl.NOT_FOUND, resl.OK}, 1*time.Second)
-	runClientStreamResiliency(resiliencyAdapter, 0, 1, []uint32{resl.UNKNOWN, resl.NOT_FOUND, resl.OK}, 2)
+	// runClientStreamResiliency(resiliencyAdapter, 0, 1, []uint32{resl.UNKNOWN, resl.NOT_FOUND, resl.OK}, 2)
+
+	// Repeated entries are weights: 8 UNKNOWN + 2 OK gives an 80/20 distribution.
+	statusCodeMix := []uint32{
+		resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN,
+		resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN,
+		resl.OK, resl.OK,
+	}
+	for i := 0; i < 300; i++ {
+		runUnaryResiliencyWithCircuit(resiliencyAdapter, 0, 3, statusCodeMix)
+		time.Sleep(time.Second)
+	}
 }
 
 // func RunSayHello(adapter *hello.HelloAdapter, name string) {
@@ -160,4 +193,19 @@ func runClientStreamResiliency(adapter *resiliencty.ResiliencyAdapter, minDelayS
 func runBiDirectionResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32, count int) {
 
 	adapter.BiDirectionResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes, count)
+}
+func runUnaryResiliencyWithCircuit(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32) {
+
+	cbreakerRes, cbreakerErr := cbreaker.Execute(
+		func() (interface{}, error) {
+			return adapter.UnaryResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes)
+		},
+	)
+
+	if cbreakerErr != nil {
+		log.Println("Failed to call Unary Resiliency:", cbreakerErr)
+	} else {
+		log.Println(cbreakerRes.(*resiliency.ResiliencyResponse).DummyString)
+	}
+
 }
