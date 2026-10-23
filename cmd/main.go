@@ -84,7 +84,7 @@ func main() {
 	}
 
 	// runUnaryResiliencyWithTimeout(resiliencyAdapter, 2, 8, []uint32{resl.OK}, 5*time.Second)
-	// runServerStreamResiliency(resiliencyAdapter, 0, 3, []uint32{resl.OK}, 15*time.Second)
+	runServerStreamResiliency(resiliencyAdapter, 0, 1, []uint32{resl.OK})
 	// runClientStreamResiliency(resiliencyAdapter, 0, 3, []uint32{resl.OK}, 10, 5*time.Second)
 	// runBiDirectionResiliency(resiliencyAdapter, 0, 3, []uint32{resl.OK}, 10, 10*time.Second)
 
@@ -93,15 +93,15 @@ func main() {
 	// runClientStreamResiliency(resiliencyAdapter, 0, 1, []uint32{resl.UNKNOWN, resl.NOT_FOUND, resl.OK}, 2)
 
 	// Repeated entries are weights: 8 UNKNOWN + 2 OK gives an 80/20 distribution.
-	statusCodeMix := []uint32{
-		resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN,
-		resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN,
-		resl.OK, resl.OK,
-	}
-	for i := 0; i < 300; i++ {
-		runUnaryResiliencyWithCircuit(resiliencyAdapter, 0, 3, statusCodeMix)
-		time.Sleep(time.Second)
-	}
+	// statusCodeMix := []uint32{
+	// 	resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN,
+	// 	resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN, resl.UNKNOWN,
+	// 	resl.OK, resl.OK,
+	// }
+	// for i := 0; i < 300; i++ {
+	// 	runUnaryResiliencyWithCircuit(resiliencyAdapter, 0, 3, statusCodeMix)
+	// 	time.Sleep(time.Second)
+	// }
 }
 
 // func RunSayHello(adapter *hello.HelloAdapter, name string) {
@@ -172,7 +172,7 @@ func runTransferMultiple(adapter *bank.BankAdapter, fromAcct, toAcct string, num
 
 func runUnaryResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32) {
 
-	res, err := adapter.UnaryResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes)
+	res, err := adapter.UnaryResiliencyWithMetadata(context.Background(), minDelaySecond, maxDelaySecond, statusCodes)
 
 	if err != nil {
 		log.Fatalln("Failted to call UnaryResponse")
@@ -182,17 +182,17 @@ func runUnaryResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, 
 }
 func runServerStreamResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32) {
 
-	adapter.ServerStreamResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes)
+	adapter.ServerStreamResiliencyWithMetadata(context.Background(), minDelaySecond, maxDelaySecond, statusCodes)
 
 }
 func runClientStreamResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32, count int) {
 
-	adapter.ClientStreamResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes, count)
+	adapter.ClientStreamResiliencyWithMetadata(context.Background(), minDelaySecond, maxDelaySecond, statusCodes, count)
 
 }
 func runBiDirectionResiliency(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32, count int) {
 
-	adapter.BiDirectionResiliency(context.Background(), minDelaySecond, maxDelaySecond, statusCodes, count)
+	adapter.BiDirectionResiliencyWithMetadata(context.Background(), minDelaySecond, maxDelaySecond, statusCodes, count)
 }
 func runUnaryResiliencyWithCircuit(adapter *resiliencty.ResiliencyAdapter, minDelaySecond, maxDelaySecond int32, statusCodes []uint32) {
 

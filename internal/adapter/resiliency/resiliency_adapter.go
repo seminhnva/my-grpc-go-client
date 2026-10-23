@@ -22,14 +22,16 @@ func isStreamCancellation(ctx context.Context, err error) bool {
 }
 
 type ResiliencyAdapter struct {
-	resiliencyClient port.ResiliencyClientPort
+	resiliencyClient             port.ResiliencyClientPort
+	resiliencyClientWithMetadata port.ResiliencyWithMetadataClientPort
 }
 
 func NewResiliencyAdapter(conn *grpc.ClientConn) (*ResiliencyAdapter, error) {
 	client := resl.NewResilienceServiceClient(conn)
-
+	clientWithMetadata := resiliency.NewResilienceWithMetadataServiceClient(conn)
 	return &ResiliencyAdapter{
-		resiliencyClient: client,
+		resiliencyClient:             client,
+		resiliencyClientWithMetadata: clientWithMetadata,
 	}, nil
 }
 func (a *ResiliencyAdapter) UnaryResiliency(ctx context.Context, minDelaySecond int32,

@@ -13,3 +13,9 @@ type ResiliencyClientPort interface {
 	ClientStreamResiliency(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[resiliency.ResiliencyRequest, resiliency.ResiliencyResponse], error)
 	BiDirectionResiliency(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[resiliency.ResiliencyRequest, resiliency.ResiliencyResponse], error)
 }
+type ResiliencyWithMetadataClientPort interface {
+	UnaryResiliencyWithMetadata(ctx context.Context, in *resiliency.ResiliencyRequest, opts ...grpc.CallOption) (*resiliency.ResiliencyResponse, error)
+	ServerStreamResiliencyWithMetadata(ctx context.Context, in *resiliency.ResiliencyRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[resiliency.ResiliencyResponse], error)
+	ClientStreamResiliencyWithMetadata(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[resiliency.ResiliencyRequest, resiliency.ResiliencyResponse], error)
+	BiDirectionResiliencyWithMetadata(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[resiliency.ResiliencyRequest, resiliency.ResiliencyResponse], error)
+}
